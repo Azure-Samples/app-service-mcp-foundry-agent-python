@@ -1,0 +1,11 @@
+name: python-mcp-agent-chat
+metadata:
+  template: python-webapp@0.0.1-beta
+infra:
+  provider: bicep
+  path: infra
+services:
+  mcp-chat-app:
+    project: .
+    host: appservice
+    language: python

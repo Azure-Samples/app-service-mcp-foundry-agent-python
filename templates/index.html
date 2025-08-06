@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Chat Interface</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Include marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <div class="container">
+        <div class="header">
+            <h1>AI Foundry Agent Connected to MCP Server</h1>
+            <p>Chat with AI agents that can use tools from any remote MCP server</p>
+        </div>
+
+        <form id="chatForm">
+            <div class="form-section">
+                <h2>🔧 MCP Server Configuration</h2>
+                <div class="form-group">
+                    <label for="mcpUrl">MCP Server URL:</label>
+                    <input type="url" id="mcpUrl" name="mcpUrl" required 
+                           placeholder="https://your-mcp-server.com/mcp/stream"
+                           value="">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>💬 Chat with AI Agent</h2>
+                <div class="form-group">
+                    <label for="message">Your Message:</label>
+                    <textarea id="message" name="message" rows="4" required 
+                              placeholder="Ask the AI agent to use the MCP tools... (e.g., 'Create a new todo item' or 'List all available tools')"></textarea>
+                </div>
+                
+                <button type="submit" class="chat-button" id="submitBtn">
+                    <span class="btn-text">Send Message</span>
+                    <span class="btn-spinner" style="display: none;"><span class="spinner"></span> Processing...</span>
+                </button>
+                
+                <div class="status" id="status"></div>
+            </div>
+        </form>
+
+        <div class="response-section" id="responseSection">
+            <h3>🤖 AI Agent Response</h3>
+            <div class="typing-indicator" id="typingIndicator">
+                <span>Agent is thinking</span>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="response-content" id="responseContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('chatForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.querySelector('.btn-text');
+        const btnSpinner = document.querySelector('.btn-spinner');
+        const status = document.getElementById('status');
+        const responseSection = document.getElementById('responseSection');
+        const responseContent = document.getElementById('responseContent');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        function showStatus(message, type) {
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+
+        function hideStatus() {
+            status.style.display = 'none';
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                submitBtn.disabled = true;
+                btnText.style.display = 'none';
+                btnSpinner.style.display = 'inline-block';
+                
+                // Show response section with typing indicator
+                responseSection.style.display = 'block';
+                typingIndicator.style.display = 'flex';
+                responseContent.style.display = 'none';
+                responseSection.scrollIntoView({ behavior: 'smooth' });
+                
+                showStatus('Connecting to MCP server and processing your request...', 'loading');
+            } else {
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline-block';
+                btnSpinner.style.display = 'none';
+                
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                responseContent.style.display = 'block';
+            }
+        }
+
+        function showResponse(response) {
+            // Configure marked for better security and formatting
+            marked.setOptions({
+                breaks: true, // Convert line breaks to <br>
+                gfm: true,    // GitHub Flavored Markdown
+                sanitize: false, // We trust the AI response
+                smartLists: true,
+                smartypants: false
+            });
+            
+            // Parse markdown and set as HTML
+            const htmlContent = marked.parse(response);
+            responseContent.innerHTML = htmlContent;
+            
+            // Ensure response content is visible
+            responseContent.style.display = 'block';
+            
+            // Add copy button functionality to code blocks
+            addCopyButtons();
+            
+            // Scroll to response
+            responseSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function addCopyButtons() {
+            const codeBlocks = responseContent.querySelectorAll('pre code');
+            codeBlocks.forEach((codeBlock, index) => {
+                const pre = codeBlock.parentElement;
+                if (pre.querySelector('.copy-btn')) return; // Already has copy button
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.innerHTML = '📋 Copy';
+                copyBtn.style.cssText = `
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: #f6f8fa;
+                    border: 1px solid #d1d5da;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    opacity: 0.7;
+                `;
+                
+                pre.style.position = 'relative';
+                
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(codeBlock.textContent);
+                        copyBtn.innerHTML = '✅ Copied!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '📋 Copy';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy: ', err);
+                        copyBtn.innerHTML = '❌ Failed';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '📋 Copy';
+                        }, 2000);
+                    }
+                });
+                
+                copyBtn.addEventListener('mouseenter', () => {
+                    copyBtn.style.opacity = '1';
+                });
+                
+                copyBtn.addEventListener('mouseleave', () => {
+                    copyBtn.style.opacity = '0.7';
+                });
+                
+                pre.appendChild(copyBtn);
+            });
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mcpUrl = document.getElementById('mcpUrl').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            if (!mcpUrl || !message) {
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+
+            setLoading(true);
+            hideStatus();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        mcp_server_url: mcpUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || `HTTP ${response.status}`);
+                }
+
+                showStatus('Response received successfully!', 'success');
+                showResponse(data.response);
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                responseSection.style.display = 'none';
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Auto-focus on message field
+        document.getElementById('message').focus();
+    </script>
+</body>
+</html>
