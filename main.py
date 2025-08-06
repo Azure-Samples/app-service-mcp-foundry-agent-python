@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI
 app = FastAPI(
-    title="Generic MCP Chat Interface",
+    title="MCP Agent Studio",
     description="A simple web interface for chatting with agents that use any MCP server",
     version="1.0.0"
 )
@@ -38,6 +38,10 @@ MODEL_DEPLOYMENT = os.getenv('MODEL_DEPLOYMENT', 'gpt-4o')
 class ChatRequest(BaseModel):
     message: str
     mcp_server_url: str
+    instructions: Optional[str] = (
+        "You are a helpful agent that can use MCP tools when needed "
+        "when chatting with users."
+    )
 
 class ChatResponse(BaseModel):
     response: str
@@ -89,9 +93,7 @@ async def chat_with_mcp_agent(chat_request: ChatRequest):
             agent = agents_client.create_agent(
                 model=MODEL_DEPLOYMENT,
                 name="mcp-chat-agent",
-                instructions="""
-                You are a helpful agent that can use MCP tools when needed when chatting with users.
-                """,
+                instructions=chat_request.instructions,
                 tools=mcp_tool.definitions,
             )
             logger.info(f"Created agent, ID: {agent.id}")
@@ -161,7 +163,7 @@ async def chat_with_mcp_agent(chat_request: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     
-    print("🚀 Starting Generic MCP Chat Interface...")
+    print("🚀 Starting MCP Agent Studio...")
     print("🔗 Chat Interface: http://localhost:8000")
     print("❤️ Health Check: http://localhost:8000/health")
     print("-" * 50)

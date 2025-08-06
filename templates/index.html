@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Chat Interface</title>
+    <title>MCP Agent Studio</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -12,8 +12,8 @@
     
     <div class="container">
         <div class="header">
-            <h1>AI Foundry Agent Connected to MCP Server</h1>
-            <p>Chat with AI agents that can use tools from any remote MCP server</p>
+            <h1>MCP Agent Studio on Azure App Service</h1>
+            <p>Chat with Azure AI Foundry agents that can use tools from any remote MCP server</p>
         </div>
 
         <form id="chatForm">
@@ -28,11 +28,20 @@
             </div>
 
             <div class="form-section">
+                <h2>🤖 Agent Instructions</h2>
+                <div class="form-group">
+                    <label for="instructions">Agent Instructions:</label>
+                    <textarea id="instructions" name="instructions" rows="3" 
+                              placeholder="Customize how the agent should behave and use the MCP tools...">You are a helpful agent that can use MCP tools when needed when chatting with users.</textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
                 <h2>💬 Chat with AI Agent</h2>
                 <div class="form-group">
                     <label for="message">Your Message:</label>
                     <textarea id="message" name="message" rows="4" required 
-                              placeholder="Ask the AI agent to use the MCP tools... (e.g., 'Create a new todo item' or 'List all available tools')"></textarea>
+                              placeholder="Ask the AI agent anything you need and it can use your MCP tools if required..."></textarea>
                 </div>
                 
                 <button type="submit" class="chat-button" id="submitBtn">
@@ -178,11 +187,10 @@
             });
         }
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        async function sendMessage() {
             const mcpUrl = document.getElementById('mcpUrl').value.trim();
             const message = document.getElementById('message').value.trim();
+            const instructions = document.getElementById('instructions').value.trim();
 
             if (!mcpUrl || !message) {
                 showStatus('Please fill in all required fields', 'error');
@@ -200,7 +208,8 @@
                     },
                     body: JSON.stringify({
                         message: message,
-                        mcp_server_url: mcpUrl
+                        mcp_server_url: mcpUrl,
+                        instructions: instructions || "You are a helpful agent that can use MCP tools when needed when chatting with users."
                     })
                 });
 
@@ -220,6 +229,20 @@
             } finally {
                 setLoading(false);
             }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendMessage();
+        });
+
+        // Handle Enter key in the message textarea
+        document.getElementById('message').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevent default newline behavior
+                sendMessage();
+            }
+            // Shift+Enter will still create a new line
         });
 
         // Auto-focus on message field
