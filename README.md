@@ -42,6 +42,8 @@ Common examples that work:
 
 ### Local Development
 
+⚠️ **Important**: Local development requires Azure AI Foundry resources to be already deployed and environment variables configured. For the easiest setup, deploy directly to Azure using the instructions below.
+
 1. **Clone and setup:**
    ```bash
    git clone <your-repo-url>
@@ -51,17 +53,28 @@ Common examples that work:
    pip install -r requirements.txt
    ```
 
-2. **Run locally:**
+2. **Configure environment variables (optional - only needed for local development if you want to run the app locally):**
+   Create a `.env` file or set these environment variables:
+   ```
+   AZURE_AI_PROJECT_ENDPOINT=https://your-ai-project.westus.ai.azure.com/api/projects/your-project
+   AZURE_AI_PROJECT_NAME=your-project-name
+   MODEL_DEPLOYMENT=gpt-4o
+   ```
+   > These values are available in your Azure AI Foundry project after deployment
+
+3. **Set up Azure credentials:**
+   ```bash
+   az login
+   ```
+   Ensure you're logged into the same Azure account that has access to your AI Foundry resources.
+
+4. **Run locally:**
    ```bash
    python main.py
    ```
    Visit http://localhost:8000 to access the application.
 
-3. **Set up Azure credentials for AI features:**
-   ```bash
-   az login
-   ```
-   The application uses Azure CLI credentials to authenticate with Azure AI Foundry. In order for this app to function locally, you must have the Azure AI Foundry resources already deployed. To simplify this process, you should deploy this to App Service and work directly in the cloud. Continue following the instructions to see how to do this.
+**💡 Recommended**: Deploy to Azure first using `azd up` below, then optionally set up local development afterward.
 
 ### Azure Deployment
 
