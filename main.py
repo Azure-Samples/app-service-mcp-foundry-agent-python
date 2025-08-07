@@ -10,6 +10,10 @@ from pydantic import BaseModel
 from azure.ai.projects import AIProjectClient
 from azure.ai.agents.models import McpTool
 from azure.identity import DefaultAzureCredential
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
