@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Optional
 import traceback
 import logging
@@ -15,9 +16,37 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# Setup logging for Azure App Service
+# Azure App Service requires specific configuration to show proper log levels
+
+# Create a custom handler that writes to stderr for errors and stdout for info
+class AzureLogHandler(logging.StreamHandler):
+    def emit(self, record):
+        if record.levelno >= logging.ERROR:
+            self.stream = sys.stderr
+        else:
+            self.stream = sys.stdout
+        super().emit(record)
+
+
+# Configure logging with the custom handler - only use root logger to avoid duplicates
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Clear any existing handlers to avoid duplicates
+root_logger.handlers.clear()
+
+# Add our custom handler only to the root logger
+handler = AzureLogHandler()
+handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+root_logger.addHandler(handler)
+
+# Get the logger for this module
 logger = logging.getLogger(__name__)
+
+# Completely disable Azure SDK logging
+logging.getLogger('azure').setLevel(logging.CRITICAL)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
 
 # Initialize FastAPI
@@ -172,4 +201,10 @@ if __name__ == "__main__":
     print("❤️ Health Check: http://localhost:8000/health")
     print("-" * 50)
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        access_log=False  # Reduce access log verbosity
+    )
