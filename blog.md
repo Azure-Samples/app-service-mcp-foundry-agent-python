@@ -44,6 +44,8 @@ This is a complete MCP server implementation that provides to-do list management
 
 This example demonstrates how easy it is to take an existing application (a to-do list) and add AI agent capabilities through MCP integration. The agent requires no custom code, and the to-do list app required no changes to support the agent integration. Use this app as a starting point to experiment with the MCP server connected agents feature in Azure AI Foundry.
 
+![To-do list MCP server application interface](#file:mcp-todo-app.png)
+
 ## Getting Started
 
 Ready to try this yourself? Here's how to get started:
@@ -80,7 +82,7 @@ That's it! Both applications will be deployed to Azure App Service with all the 
 
 ### Using the Application
 
-*[Screenshot Placeholder: Main application interface showing the chat interface and MCP server connection options]*
+![Main application interface showing the chat interface and MCP server connection options](#file:mcp-agent-studio-1.png)
 
 Once deployed, you can:
 
@@ -88,7 +90,7 @@ Once deployed, you can:
 2. **Start chatting**: Ask the agent to manage your to-dos using natural language.
 3. **See the magic**: Watch as the agent uses MCP tools to perform to-do operations.
 
-*[Screenshot Placeholder: Example conversation showing natural language to-do management]*
+![Example conversation showing natural language to-do management](#file:mcp-agent-studio-2.png)
 
 ## MCP vs. OpenAPI: Multiple options to get your apps connected to AI agents
 
